@@ -535,11 +535,11 @@ if __name__ == "__main__":
     # Example: Create a config and run training
     # Replace "gpt2" with your desired model
     training_config = TrainingConfig(
-        model_name="Qwen/Qwen2.5-1.5B-Instruct",
+        model_name="Qwen/Qwen3-4B",
         training_steps=20,  # Use steps
         vllm_restart_interval=3,  # Example interval
         use_wandb=True,  # Set to True to enable logging
-        wandb_project="grpo-trainer-example",  # Replace with your project name
+        wandb_project="kernel-llm",  # Replace with your project name
     )
 
     # --- End Mock ---

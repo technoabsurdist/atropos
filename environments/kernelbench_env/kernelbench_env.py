@@ -41,9 +41,9 @@ from atroposlib.utils.tokenize_for_trainer import tokenize_for_trainer
 # Set the start method to 'spawn' for CUDA compatibility
 mp.set_start_method("spawn", force=True)
 
-KERNELBENCH_DIR = Path("/path/to/KernelBench")
+KERNELBENCH_DIR = Path("./KernelBench")
 KERNELBENCH_LEVEL = 1
-KERNELBENCH_PROBLEM_NUMBER = 1
+KERNELBENCH_PROBLEM_NUMBER = 20
 
 os.environ["TORCH_CUDA_ARCH_LIST"] = "9.0"
 
@@ -89,7 +89,7 @@ def evaluate_single_kernel(args):
         num_correct_trials=1,
         num_perf_trials=1,
         build_dir=build_dir,
-        device="cuda:7",
+        device="cuda:0",
     )
 
     compiled_flag = bool(getattr(eval_result, "compiled", False))
@@ -126,7 +126,7 @@ class KernelBenchEnv(BaseEnv):
         server_cfgs = [
             APIServerConfig(
                 model_name="Qwen/Qwen3-4B",
-                base_url="http://localhost:9001/v1",
+                base_url="http://localhost:9002/v1",
                 api_key="DUMMY_KB_KEY",
                 num_requests_for_eval=64,
             )
@@ -141,7 +141,7 @@ class KernelBenchEnv(BaseEnv):
             "problem_file": f"{KERNELBENCH_PROBLEM_NUMBER}_Square_matrix_multiplication_.py",
         }
         self.iter = 0
-        with open("prompt.txt", "r", encoding="utf-8") as f:
+        with open("./KernelBench/src/scratch/prompt.txt", "r", encoding="utf-8") as f:
             self.prompt = f.read()
 
         # Get reference code directly from the dataset
@@ -150,7 +150,7 @@ class KernelBenchEnv(BaseEnv):
         )
         self.reward_buffer = list()
         # Create a process pool for parallel processing
-        self.pool = mp.Pool(processes=24)
+        self.pool = mp.Pool(processes=4)
 
     # --------------------- Rollout / scoring ----------------------------------
     async def collect_trajectories(
@@ -168,7 +168,7 @@ class KernelBenchEnv(BaseEnv):
             messages=[user_msg],
             n=self.config.group_size,
             max_tokens=self.config.max_token_length,
-            temperature=0.0,
+            temperature=0.01,
         )
 
         # Path: runs/<RUN_NAME>/level_1/1/
@@ -182,7 +182,7 @@ class KernelBenchEnv(BaseEnv):
             sample_path = run_dir / f"sample_{i}.cu"
             sample_path.write_text(kernel_code, encoding="utf‑8")
 
-            messages = (user_msg, {"role": "assistant", "content": kernel_code})
+            messages = [user_msg, {"role": "assistant", "content": kernel_code}]
             to_score.append(
                 {
                     "messages": messages,
@@ -268,3 +268,4 @@ class KernelBenchEnv(BaseEnv):
 
 if __name__ == "__main__":
     KernelBenchEnv.cli()
+
