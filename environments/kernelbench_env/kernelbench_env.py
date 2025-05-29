@@ -89,7 +89,7 @@ def evaluate_single_kernel(args):
         num_correct_trials=1,
         num_perf_trials=1,
         build_dir=build_dir,
-        device="cuda:0",
+        device="cuda:1",
     )
 
     compiled_flag = bool(getattr(eval_result, "compiled", False))
